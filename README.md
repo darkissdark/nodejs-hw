@@ -1,14 +1,92 @@
-# Node.js Express Notes API
+# Node.js Express Notes API with MongoDB
 
-Простий Express-додаток для роботи з колекцією нотаток, реалізований як частина навчального завдання.
+Express-додаток для роботи з нотатками, реалізований з підключенням до MongoDB через Mongoose (02-mongodb).
 
 ## Функціональність
 
 - HTTP-сервер на Express.js
-- Робота з нотатками через REST API
+- Підключення до MongoDB через Mongoose
+- Повний CRUD для нотаток (створення, читання, оновлення, видалення)
 - Логування HTTP-запитів за допомогою pino-http
-- Обробка помилок та неіснуючих маршрутів
+- Обробка помилок (404, 500) через http-errors
 - CORS підтримка
+- Модульна архітектура (контролери, роути, middleware)
+
+## Технології
+
+- **Node.js** - JavaScript runtime
+- **Express.js** - веб-фреймворк
+- **MongoDB** - NoSQL база даних
+- **Mongoose** - ODM для MongoDB
+- **pino-http** - логування HTTP-запитів
+- **http-errors** - обробка HTTP помилок
+- **cors** - підтримка CORS
+- **dotenv** - змінні оточення
+
+## Структура проєкту
+
+```
+nodejs-hw/
+├── src/
+│   ├── controllers/
+│   │   └── notesController.js    # Контролери для обробки запитів
+│   ├── db/
+│   │   └── connectMongoDB.js     # Підключення до MongoDB
+│   ├── middleware/
+│   │   ├── errorHandler.js       # Обробка помилок
+│   │   ├── logger.js             # HTTP логування
+│   │   └── notFoundHandler.js    # Обробка 404
+│   ├── models/
+│   │   └── note.js               # Mongoose модель Note
+│   ├── routes/
+│   │   └── notesRoutes.js        # Маршрути для нотаток
+│   └── server.js                 # Головний файл сервера
+├── .env                          # Змінні оточення
+├── package.json                  # Залежності та скрипти
+└── README.md                     # Документація
+```
+
+## Встановлення та запуск
+
+### 1. Клонування репозиторію:
+
+```bash
+git clone <repository-url>
+cd nodejs-hw
+git checkout 02-mongodb
+```
+
+### 2. Встановлення залежностей:
+
+```bash
+npm install
+```
+
+### 3. Налаштування MongoDB:
+
+Створіть файл `.env` у корені проєкту:
+
+```env
+PORT=3030
+NODE_ENV=development
+MONGO_URL=mongodb+srv://<username>:<password>@cluster.mongodb.net/<dbname>
+```
+
+### 4. Запуск сервера:
+
+**Режим розробки:**
+
+```bash
+npm run dev
+```
+
+**Продакшн:**
+
+```bash
+npm start
+```
+
+Сервер буде доступний за адресою `http://localhost:3030`
 
 ## API Маршрути
 
@@ -18,136 +96,97 @@
 GET /notes
 ```
 
-**Відповідь:**
-
-```json
-{
-  "message": "Retrieved all notes"
-}
-```
-
 ### Отримати нотатку за ID
 
 ```http
 GET /notes/:noteId
 ```
 
-**Відповідь:**
-
-```json
-{
-  "message": "Retrieved note with ID: {noteId}"
-}
-```
-
-### Тестовий маршрут для помилок
+### Створити нову нотатку
 
 ```http
-GET /test-error
-```
+POST /notes
+Content-Type: application/json
 
-**Відповідь:**
-
-```json
 {
-  "message": "Internal Server Error",
-  "error": "Simulated server error"
+  "title": "Назва нотатки",
+  "content": "Текст нотатки",
+  "tag": "Personal"
 }
 ```
 
-## Встановлення та запуск
+### Оновити нотатку
 
-1. Клонуйте репозиторій:
+```http
+PATCH /notes/:noteId
+Content-Type: application/json
 
-```bash
-git clone <repository-url>
-cd nodejs-hw
+{
+  "title": "Оновлена назва",
+  "content": "Новий текст",
+  "tag": "Important"
+}
 ```
 
-2. Встановіть залежності:
+### Видалити нотатку
 
-```bash
-npm install
+```http
+DELETE /notes/:noteId
 ```
 
-3. Створіть файл `.env` у корені проєкту:
+## Модель Note
 
-```env
-PORT=3030
-NODE_ENV=development
-```
-
-4. Запустіть сервер у режимі розробки:
-
-```bash
-npm run dev
-```
-
-5. Запустіть сервер у продакшені:
-
-```bash
-npm start
-```
-
-Сервер буде доступний за адресою `http://localhost:3030`
-
-## Технології
-
-- **Node.js** - JavaScript runtime
-- **Express.js** - веб-фреймворк
-- **pino-http** - логування HTTP-запитів
-- **cors** - підтримка CORS
-- **dotenv** - змінні оточення
-- **nodemon** - автоматичне перезавантаження при розробці
-
-## Структура проєкту
-
-```
-nodejs-hw/
-├── src/
-│   └── server.js          # Основний файл сервера
-├── .env                   # Змінні оточення
-├── .gitignore            # Git ignore файл
-├── .prettierrc           # Конфігурація Prettier
-├── eslint.config.mjs     # Конфігурація ESLint
-├── package.json          # Залежності та скрипти
-└── README.md             # Документація
-```
+| Поле        | Тип    | Обов'язкове | За замовчуванням | Значення                                                                           |
+| ----------- | ------ | ----------- | ---------------- | ---------------------------------------------------------------------------------- |
+| `title`     | String | Так         | -                | Назва нотатки (з trim)                                                             |
+| `content`   | String | Ні          | ""               | Текст нотатки (з trim)                                                             |
+| `tag`       | String | Ні          | "Todo"           | Work, Personal, Meeting, Shopping, Ideas, Travel, Finance, Health, Important, Todo |
+| `createdAt` | Date   | Авто        | -                | Дата створення                                                                     |
+| `updatedAt` | Date   | Авто        | -                | Дата оновлення                                                                     |
 
 ## Middleware
 
-- **express.json()** - обробка JSON даних
-- **cors()** - підтримка CORS
-- **pino-http** - логування запитів
-- **404 handler** - обробка неіснуючих маршрутів
-- **500 handler** - обробка помилок сервера
+Додаток використовує наступні middleware:
+
+1. **logger** (pino-http) - логування всіх HTTP-запитів
+2. **express.json()** - парсинг JSON-тіла запитів
+3. **cors()** - дозвіл CORS запитів
+4. **notFoundHandler** - обробка неіснуючих маршрутів (404)
+5. **errorHandler** - глобальна обробка помилок (500)
 
 ## Приклади використання
 
-### Отримати всі нотатки
+### Отримати всі нотатки:
 
 ```bash
 curl http://localhost:3030/notes
 ```
 
-### Отримати конкретну нотатку
+### Створити нову нотатку:
 
 ```bash
-curl http://localhost:3030/notes/123
+curl -X POST http://localhost:3030/notes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Нова нотатка",
+    "content": "Текст нотатки",
+    "tag": "Personal"
+  }'
 ```
 
-### Тест помилки
+### Оновити нотатку:
 
 ```bash
-curl http://localhost:3030/test-error
+curl -X PATCH http://localhost:3030/notes/<noteId> \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Оновлена нотатка",
+    "tag": "Important"
+  }'
 ```
 
-### Тест неіснуючого маршруту
+### Видалити нотатку:
 
 ```bash
-curl http://localhost:3030/nonexistent
+curl -X DELETE http://localhost:3030/notes/<noteId>
 ```
-
-## Автор
-
-Створено як частина навчального завдання з Node.js та Express.js.
